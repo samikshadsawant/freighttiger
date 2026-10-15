@@ -5,10 +5,12 @@ from sentence_transformers import SentenceTransformer
 
 from src.retrieval import (
     MODEL_NAME,
+    find_supporting_note,
     prepare_notes,
     get_eligible_notes,
     rank_eligible_notes,
 )
+from src.explain import choose_note_and_verdict
 
 
 @pytest.fixture(scope="module")
@@ -67,6 +69,27 @@ def test_no_eligible_notes_returns_empty_dataframe(notes):
     assert eligible.empty
 
 
+def test_unreviewed_note_is_not_returned_as_supporting(notes, model):
+    raw_notes = pd.read_csv("data/context_notes.csv")
+    raw_notes.loc[len(raw_notes)] = {
+        "note_id": "N011",
+        "date": "2026-06-01",
+        "applies_to": "All Routes",
+        "note": "A new event may have changed transportation costs.",
+    }
+    notes_with_unreviewed = prepare_notes(raw_notes)
+
+    result = find_supporting_note(
+        route="Mumbai-Pune",
+        week_of="2026-06-01",
+        notes=notes_with_unreviewed,
+        query="Transportation costs increased",
+        model=model,
+    )
+
+    assert result is None
+
+
 @pytest.mark.parametrize(
     "route,week,expected_note",
     [
@@ -112,3 +135,54 @@ def test_ranked_notes_are_all_eligible(notes, model):
     )
 
     assert set(ranked["note_id"]).issubset(eligible_ids)
+
+
+def test_eligible_support_beats_higher_similarity_decoy(model):
+    synthetic = pd.DataFrame([
+        {
+            "note_id": "SYNTHETIC_DECOY",
+            "date": pd.Timestamp("2025-04-01"),
+            "start_date": pd.Timestamp("2025-04-01"),
+            "end_date": pd.Timestamp("2025-04-07"),
+            "applies_to": "Test-Route",
+            "note": "Stable demand and no disruptions; conditions remained normal.",
+            "can_justify_rise": False,
+            "evidence_type": "non_supporting",
+            "reason": "Demand remained stable and conditions were normal.",
+        },
+        {
+            "note_id": "SYNTHETIC_SUPPORT",
+            "date": pd.Timestamp("2025-04-01"),
+            "start_date": pd.Timestamp("2025-04-01"),
+            "end_date": pd.Timestamp("2025-04-07"),
+            "applies_to": "Test-Route",
+            "note": "A temporary toll surcharge increased trip costs.",
+            "can_justify_rise": True,
+            "evidence_type": "route_specific",
+            "reason": "A temporary toll surcharge increased trip costs.",
+        },
+    ])
+    ranked = rank_eligible_notes(
+        route="Test-Route",
+        week_of="2025-04-07",
+        query="Stable demand and no disruptions; conditions remained normal.",
+        notes=synthetic,
+        model=model,
+    )
+
+    assert set(ranked["note_id"]) == {
+        "SYNTHETIC_DECOY",
+        "SYNTHETIC_SUPPORT",
+    }
+    assert ranked.iloc[0]["note_id"] == "SYNTHETIC_DECOY"
+
+    selected, verdict = choose_note_and_verdict(
+        ranked,
+        route="Test-Route",
+        week_of="2025-04-07",
+        observed_increase_pct=25.0,
+        peer_increase_pct=20.0,
+    )
+
+    assert selected["note_id"] == "SYNTHETIC_SUPPORT"
+    assert verdict["explained"] is True

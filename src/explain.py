@@ -3,14 +3,56 @@ import pandas as pd
 
 from sentence_transformers import SentenceTransformer
 
-from src.retrieval import prepare_notes, rank_eligible_notes
+from src.config import NEAR_MISS_MAX_GAP_DAYS
+from src.retrieval import (
+    MODEL_NAME,
+    encode_note_embeddings,
+    prepare_notes,
+    rank_eligible_notes,
+)
 from src.verdict import assess_note_support
 
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+def _near_miss_note(route: str, week_of, notes: pd.DataFrame):
+    week_start = pd.Timestamp(week_of).normalize()
+    week_end = week_start + pd.Timedelta(days=6)
+    applicable = notes.loc[
+        notes["applies_to"].isin([route, "All Routes"])
+        & notes["start_date"].notna()
+        & notes["end_date"].notna()
+    ].copy()
+
+    if applicable.empty:
+        return None
+
+    def gap_days(note):
+        note_start = pd.Timestamp(note["start_date"]).normalize()
+        note_end = pd.Timestamp(note["end_date"]).normalize()
+        if note_end < week_start:
+            return (week_start - note_end).days
+        if note_start > week_end:
+            return (note_start - week_end).days
+        return 0
+
+    applicable["gap_days"] = applicable.apply(gap_days, axis=1)
+    nearby = applicable.loc[
+        applicable["gap_days"] <= NEAR_MISS_MAX_GAP_DAYS
+    ]
+    preceding = nearby.loc[nearby["end_date"] < week_start]
+    candidates = preceding if not preceding.empty else nearby
+    if candidates.empty:
+        return None
+    closest = candidates.sort_values(
+        ["gap_days", "date", "note_id"]
+    ).iloc[0]
+    return closest.drop(labels="gap_days")
 
 
-def explain_candidates(candidates: pd.DataFrame, notes_raw: pd.DataFrame) -> pd.DataFrame:
+def explain_candidates(
+    candidates: pd.DataFrame,
+    notes_raw: pd.DataFrame,
+    embedding_usage: dict | None = None,
+) -> pd.DataFrame:
     """
     Explain candidate route-week records using eligible context notes.
 
@@ -20,6 +62,13 @@ def explain_candidates(candidates: pd.DataFrame, notes_raw: pd.DataFrame) -> pd.
 
     notes = prepare_notes(notes_raw)
     model = SentenceTransformer(MODEL_NAME)
+    if embedding_usage is None:
+        embedding_usage = {"encode_calls": 0, "tokens_encoded": 0}
+    note_embeddings = encode_note_embeddings(
+        notes,
+        model,
+        usage=embedding_usage,
+    )
 
     output_rows = []
 
@@ -44,17 +93,28 @@ def explain_candidates(candidates: pd.DataFrame, notes_raw: pd.DataFrame) -> pd.
             query=query,
             notes=notes,
             model=model,
+            note_embeddings=note_embeddings,
+            usage=embedding_usage,
         )
 
-        note = ranked_notes.iloc[0] if not ranked_notes.empty else None
-
-        verdict = assess_note_support(
-            note=note,
-            route=route,
-            week_of=week_of,
-            observed_increase_pct=float(own_pct),
-            peer_increase_pct=float(peer_pct),
-        )
+        if ranked_notes.empty:
+            note = None
+            note = _near_miss_note(route, week_of, notes)
+            verdict = assess_note_support(
+                note=note,
+                route=route,
+                week_of=week_of,
+                observed_increase_pct=float(own_pct),
+                peer_increase_pct=float(peer_pct),
+            )
+        else:
+            note, verdict = choose_note_and_verdict(
+                ranked_notes,
+                route=route,
+                week_of=week_of,
+                observed_increase_pct=float(own_pct),
+                peer_increase_pct=float(peer_pct),
+            )
 
         if verdict["explained"]:
             flagged = "No (justified)"
@@ -63,7 +123,6 @@ def explain_candidates(candidates: pd.DataFrame, notes_raw: pd.DataFrame) -> pd.
             flagged = "Yes"
             matched_note_id = ""
 
-        
         output_rows.append({
             "route": route,
             "week_of": week_of.strftime("%Y-%m-%d"),
@@ -81,14 +140,42 @@ def explain_candidates(candidates: pd.DataFrame, notes_raw: pd.DataFrame) -> pd.
 
 
     columns = [
-    "route",
-    "week_of",
-    "cost_per_tonne_km",
-    "vs_own_history",
-    "vs_similar_routes",
-    "flagged",
-    "matched_note_id",
-    "reason",
-]
+        "route",
+        "week_of",
+        "cost_per_tonne_km",
+        "vs_own_history",
+        "vs_similar_routes",
+        "flagged",
+        "matched_note_id",
+        "reason",
+    ]
 
-    return pd.DataFrame(output_rows, columns=columns)
+    return (
+        pd.DataFrame(output_rows, columns=columns)
+        .sort_values(["route", "week_of"])
+        .reset_index(drop=True)
+    )
+
+
+def choose_note_and_verdict(
+    ranked_notes: pd.DataFrame,
+    route: str,
+    week_of,
+    observed_increase_pct: float,
+    peer_increase_pct: float,
+):
+    assessed = [
+        (
+            note,
+            assess_note_support(
+                note=note,
+                route=route,
+                week_of=week_of,
+                observed_increase_pct=observed_increase_pct,
+                peer_increase_pct=peer_increase_pct,
+            ),
+        )
+        for _, note in ranked_notes.iterrows()
+    ]
+    supporting = [pair for pair in assessed if pair[1]["explained"]]
+    return supporting[0] if supporting else (assessed[0] if assessed else (None, None))

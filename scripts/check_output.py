@@ -1,9 +1,11 @@
 
 import csv
+import json
 import pandas as pd
 from pathlib import Path
 
 OUTPUT_PATH = Path("outputs/final_output.csv")
+USAGE_PATH = Path("outputs/token_cost_log.json")
 
 EXPECTED_COLUMNS = [
     "route",
@@ -48,6 +50,16 @@ def main():
             assert len(cost.split(".")[-1]) == 2 and "." in cost, (
                 f"Cost formatting error on line {line_number}: {cost!r}"
             )
+
+    with USAGE_PATH.open("r", encoding="utf-8") as file:
+        usage = json.load(file)
+    assert usage["llm"]["calls"] == 0
+    assert usage["llm"]["input_tokens"] == 0
+    assert usage["llm"]["output_tokens"] == 0
+    assert usage["llm"]["estimated_cost_inr"] == 0
+    assert usage["retrieval"]["model"]
+    assert usage["retrieval"]["encode_calls"] > 0
+    assert usage["retrieval"]["tokens_encoded"] > 0
 
     print("All output validation checks passed!")
     print(f"Validated {len(df)} rows and {len(EXPECTED_COLUMNS)} columns.")

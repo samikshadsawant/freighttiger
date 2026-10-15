@@ -5,6 +5,7 @@ NOTE_METADATA = [
         "start_date": "2025-02-24",
         "end_date": "2025-03-08",
         "can_justify_rise": True,
+        "evidence_type": "route_specific",
         "reason": "Flooding caused detours and higher trip costs."
     },
     {
@@ -12,6 +13,7 @@ NOTE_METADATA = [
         "start_date": "2025-01-20",
         "end_date": "2025-01-26",
         "can_justify_rise": True,
+        "evidence_type": "route_specific",
         "reason": "A festival surcharge was applied due to high demand and limited truck availability."
     },
     {
@@ -19,13 +21,15 @@ NOTE_METADATA = [
         "start_date": "2025-05-05",
         "end_date": "2025-12-31",
         "can_justify_rise": True,
-        "reason": "Nationwide diesel prices rose, increasing transportation costs by roughly 5-7%."
+        "evidence_type": "general_cost_pressure",
+        "reason": "Nationwide diesel prices rose, increasing transportation costs by roughly 5.0-7.0%."
     },
     {
         "note_id": "N004",
         "start_date": "2024-03-11",
         "end_date": "2024-03-17",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "The affected routes are not part of this dataset."
     },
     {
@@ -33,6 +37,7 @@ NOTE_METADATA = [
         "start_date": "2024-07-29",
         "end_date": "2024-08-04",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "Costs were explicitly stated not to be significantly affected."
     },
     {
@@ -40,6 +45,7 @@ NOTE_METADATA = [
         "start_date": "2025-09-22",
         "end_date": "2025-09-28",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "Demand remained stable and no major disruptions were reported."
     },
     {
@@ -47,6 +53,7 @@ NOTE_METADATA = [
         "start_date": "2024-05-20",
         "end_date": "2024-05-26",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "The note describes improved road conditions."
     },
     {
@@ -54,6 +61,7 @@ NOTE_METADATA = [
         "start_date": "2025-06-09",
         "end_date": "2025-06-15",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "No significant disruptions were reported."
     },
     {
@@ -61,6 +69,7 @@ NOTE_METADATA = [
         "start_date": "2025-03-17",
         "end_date": "2025-03-23",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "The route returned to normal conditions."
     },
     {
@@ -68,6 +77,7 @@ NOTE_METADATA = [
         "start_date": "2025-10-27",
         "end_date": "2025-11-02",
         "can_justify_rise": False,
+        "evidence_type": "non_supporting",
         "reason": "Compliance costs were absorbed without a rate change."
     }
 ]

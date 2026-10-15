@@ -7,9 +7,10 @@ from datetime import datetime, timezone
 def write_usage_log(
     candidate_rows: int,
     output_rows: int,
+    embedding_usage: dict,
     retrieval_model: str = "sentence-transformers/all-MiniLM-L6-v2",
 ):
-    """Record actual LLM usage and pipeline retrieval activity."""
+    """Record generative LLM usage and measured embedding work."""
 
     log = {
         "run_timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -23,6 +24,8 @@ def write_usage_log(
         "retrieval": {
             "model": retrieval_model,
             "candidate_rows_processed": int(candidate_rows),
+            "encode_calls": int(embedding_usage["encode_calls"]),
+            "tokens_encoded": int(embedding_usage["tokens_encoded"]),
         },
         "pipeline": {
             "output_rows": int(output_rows),
@@ -43,4 +46,9 @@ def write_usage_log(
 
     print(f"Usage log saved: {output_path}")
     print("LLM calls: 0 | Input tokens: 0 | Output tokens: 0")
+    print(
+        "Embedding encode calls: "
+        f"{embedding_usage['encode_calls']} | Tokens encoded: "
+        f"{embedding_usage['tokens_encoded']} | Model: {retrieval_model}"
+    )
     print("Estimated LLM cost: ₹0.00")

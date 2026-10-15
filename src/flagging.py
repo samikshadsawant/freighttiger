@@ -1,8 +1,9 @@
 
 import pandas as pd
+from src.config import OWN_THRESHOLD_PCT, PEER_THRESHOLD_PCT
 
-OWN_THRESHOLD = 5.0
-PEER_THRESHOLD = 15.0
+OWN_THRESHOLD = OWN_THRESHOLD_PCT
+PEER_THRESHOLD = PEER_THRESHOLD_PCT
 
 
 def flag_candidates(

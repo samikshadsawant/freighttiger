@@ -1,7 +1,7 @@
 # Reproducibility Test Report
 
 - Result: **PASS**
-- Test date (UTC): 2026-10-15T03:20:04.323820+00:00
+- Test date (UTC): 2026-10-15T05:24:43.734053+00:00
 - Pipeline command: `python -m src.run`
 - Number of runs: 3
 - Output: `outputs/final_output.csv`
@@ -13,9 +13,9 @@
 
 | Run | Saved output | SHA-256 |
 |---|---|---|
-| 1 | `outputs/reproducibility/run_1.csv` | `f57151a7b1ee16d91e4342e3ffd1080924536293458b0802ba2679db7b816413` |
-| 2 | `outputs/reproducibility/run_2.csv` | `f57151a7b1ee16d91e4342e3ffd1080924536293458b0802ba2679db7b816413` |
-| 3 | `outputs/reproducibility/run_3.csv` | `f57151a7b1ee16d91e4342e3ffd1080924536293458b0802ba2679db7b816413` |
+| 1 | `outputs/reproducibility/run_1.csv` | `a2dfa88d3f3c20bb2f3dc961beae3042ff7171492af5e96a937fc3172a120277` |
+| 2 | `outputs/reproducibility/run_2.csv` | `a2dfa88d3f3c20bb2f3dc961beae3042ff7171492af5e96a937fc3172a120277` |
+| 3 | `outputs/reproducibility/run_3.csv` | `a2dfa88d3f3c20bb2f3dc961beae3042ff7171492af5e96a937fc3172a120277` |
 
 ## Conclusion
 

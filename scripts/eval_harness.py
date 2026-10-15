@@ -10,7 +10,8 @@ CASES = [
     ("N001", "Chennai-Bangalore", "2025-02-24", 31.46, 38.67, True, "N001"),
     ("N001", "Chennai-Bangalore", "2025-03-03", 22.78, 31.98, True, "N001"),
     ("N002", "Ahmedabad-Mumbai", "2025-01-20", 29.47, 22.49, True, "N002"),
-    ("N002", "Ahmedabad-Mumbai", "2025-01-26", 10.00, 5.00, True, "N002"),
+    ("N002", "Ahmedabad-Mumbai", "2025-01-13", 10.00, 5.00, False, None),
+    ("N002", "Ahmedabad-Mumbai", "2025-01-27", 10.00, 5.00, False, None),
 
     # Correct route, but outside the note's date window
     ("N001", "Chennai-Bangalore", "2025-03-17", 13.69, 33.48, False, None),

@@ -6,14 +6,16 @@ from sentence_transformers import SentenceTransformer
 
 from src.retrieval import (
     MODEL_NAME,
+    encode_note_embeddings,
     prepare_notes,
     get_eligible_notes,
     rank_eligible_notes,
 )
+from src.explain import choose_note_and_verdict
 from src.verdict import assess_note_support
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT / "data" / "context_notes.csv"
 
 # Each case specifies the expected retrieval result and verdict.
@@ -58,6 +60,7 @@ def build_query(case):
 def main():
     notes = prepare_notes(pd.read_csv(DATA_PATH))
     model = SentenceTransformer(MODEL_NAME)
+    note_embeddings = encode_note_embeddings(notes, model)
 
     retrieval_passes = 0
     verdict_passes = 0
@@ -77,6 +80,7 @@ def main():
             query=build_query(case),
             notes=notes,
             model=model,
+            note_embeddings=note_embeddings,
         )
 
         expected_id = case["expected_note"]
@@ -143,6 +147,62 @@ def main():
         f"{verdict_passes}/{total} "
         f"({verdict_passes / total:.1%})"
     )
+
+    synthetic = pd.DataFrame([
+        {
+            "note_id": "SYNTHETIC_DECOY",
+            "date": "2025-04-01",
+            "start_date": "2025-04-01",
+            "end_date": "2025-04-07",
+            "applies_to": "Test-Route",
+            "note": "Stable demand and no disruptions; conditions remained normal.",
+            "can_justify_rise": False,
+            "evidence_type": "non_supporting",
+            "reason": "Demand remained stable and conditions were normal.",
+        },
+        {
+            "note_id": "SYNTHETIC_SUPPORT",
+            "date": "2025-04-01",
+            "start_date": "2025-04-01",
+            "end_date": "2025-04-07",
+            "applies_to": "Test-Route",
+            "note": "A temporary toll surcharge increased trip costs.",
+            "can_justify_rise": True,
+            "evidence_type": "route_specific",
+            "reason": "A temporary toll surcharge increased trip costs.",
+        },
+    ])
+    for column in ["date", "start_date", "end_date"]:
+        synthetic[column] = pd.to_datetime(synthetic[column])
+    query = "Stable demand and no disruptions; conditions remained normal."
+    ranked = rank_eligible_notes(
+        route="Test-Route",
+        week_of="2025-04-07",
+        query=query,
+        notes=synthetic,
+        model=model,
+    )
+    selected, verdict = choose_note_and_verdict(
+        ranked,
+        route="Test-Route",
+        week_of="2025-04-07",
+        observed_increase_pct=25.0,
+        peer_increase_pct=20.0,
+    )
+    print("\nSEMANTIC RANKING VS EVIDENCE RULE")
+    print(f"Embedding top result: {ranked.iloc[0]['note_id']}")
+    print(
+        f"Selected note: {selected['note_id']} "
+        f"({'justified' if verdict['explained'] else 'unexplained'})"
+    )
+    print(
+        "Route/date eligibility comes first; similarity ranks admissible "
+        "notes, while reviewed evidence decides support."
+    )
+    if ranked.iloc[0]["note_id"] != "SYNTHETIC_DECOY":
+        raise SystemExit("Synthetic semantic decoy did not rank first.")
+    if selected["note_id"] != "SYNTHETIC_SUPPORT" or not verdict["explained"]:
+        raise SystemExit("Reviewed supporting note did not win selection.")
 
 
 if __name__ == "__main__":

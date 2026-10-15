@@ -6,6 +6,7 @@ import pandas as pd
 from src.metrics import compute_weekly_metrics
 from src.flagging import flag_candidates
 from src.explain import explain_candidates
+from src.output_validation import validate_final_output
 from src.usage_logger import write_usage_log
 
 
@@ -29,7 +30,18 @@ def main():
     ].copy()
 
     # 4. Explain candidates using context notes
-    final_output = explain_candidates(candidates, notes)
+    embedding_usage = {"encode_calls": 0, "tokens_encoded": 0}
+    final_output = explain_candidates(
+        candidates,
+        notes,
+        embedding_usage=embedding_usage,
+    )
+
+    sample_columns = pd.read_csv(
+        data_dir / "sample_output_format_v2.csv",
+        nrows=0,
+    ).columns.tolist()
+    validate_final_output(final_output, sample_columns)
 
     # 5. Save final output
     output_path = output_dir / "final_output.csv"
@@ -52,6 +64,7 @@ def main():
     write_usage_log(
         candidate_rows=len(candidates),
         output_rows=len(final_output),
+        embedding_usage=embedding_usage,
     )
 
 
