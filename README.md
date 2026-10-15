@@ -15,7 +15,7 @@ The pipeline produces `outputs/final_output.csv`, containing candidate anomalies
 3. **Baseline comparison:** Compare the current rate against the route's own history and other routes of the same route type in the same week.
 4. **Candidate flagging:** Flag a route-week only when both percentage thresholds are exceeded and both baselines are available.
 5. **Context retrieval:** Apply route and week-window eligibility first, encode note texts once, and rank eligible notes with `sentence-transformers/all-MiniLM-L6-v2`.
-6. **Evidence-based verdict:** Assess every eligible note and prefer the highest-similarity one that passes the reviewed route, date, and evidence rules. Similarity alone never establishes justification.
+6. **Evidence-based verdict:** Assess every eligible note and prefer the highest-similarity one that passes the reviewed route, date, and evidence rules. If none supports the rise, cite a reviewed note marked as potentially justifying a rise before other non-supporting notes; similarity only orders notes within each group. Similarity alone never establishes justification.
 
 ## 3. Assumptions and Thresholds
 
@@ -64,7 +64,7 @@ If no eligible note adequately supports a candidate, the route-week remains flag
 
 The following checks have been run successfully:
 
-- **18 automated tests passed**, covering weekly grouping, the cost formula and baselines, retrieval, unreviewed notes, end-to-end synthetic eligibility/ranking/support selection, output format, and the hand-labeled output set.
+- **20 automated tests passed**, covering weekly grouping, the cost formula and baselines, retrieval, unreviewed notes, order-independent citations, end-to-end synthetic eligibility/ranking/support selection, output format, and the hand-labeled output set.
 - **17/17 verdict test cases passed.** These manually defined cases cover valid evidence, Monday-based date boundaries, wrong routes, and non-supporting notes.
 - **Retrieval evaluation:** 3/3 selected real cases retrieved the expected note; a synthetic example demonstrates a decoy ranking first while reviewed support is selected.
 - **Output validation:** 17 rows and 8 columns passed the output-format checks.
@@ -158,6 +158,13 @@ Inspect threshold sensitivity:
 
 ```powershell
 python -m scripts.check_thresholds
+```
+
+Inspect weekly metrics and candidate flagging diagnostics:
+
+```powershell
+python -m scripts.check_metrics
+python -m scripts.check_flagging
 ```
 
 Check reproducibility:

@@ -123,30 +123,3 @@ def rank_eligible_notes(
         ["similarity", "note_id"],
         ascending=[False, True]
     ).reset_index(drop=True)
-
-
-def find_supporting_note(
-    route: str,
-    week_of,
-    notes: pd.DataFrame,
-    query: str,
-    model=None
-):
-    ranked = rank_eligible_notes(
-        route=route,
-        week_of=week_of,
-        query=query,
-        notes=notes,
-        model=model
-    )
-
-    # Only explicitly reviewed notes can support a rise.
-    supporting = ranked[
-        ranked["can_justify_rise"].eq(True)
-        & ranked["evidence_type"].eq("route_specific")
-    ]
-
-    if supporting.empty:
-        return None
-
-    return supporting.iloc[0]

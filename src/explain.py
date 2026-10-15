@@ -98,7 +98,6 @@ def explain_candidates(
         )
 
         if ranked_notes.empty:
-            note = None
             note = _near_miss_note(route, week_of, notes)
             verdict = assess_note_support(
                 note=note,
@@ -178,4 +177,15 @@ def choose_note_and_verdict(
         for _, note in ranked_notes.iterrows()
     ]
     supporting = [pair for pair in assessed if pair[1]["explained"]]
-    return supporting[0] if supporting else (assessed[0] if assessed else (None, None))
+    if supporting:
+        return supporting[0]
+
+    assessed.sort(
+        key=lambda pair: not _can_justify_rise(pair[0])
+    )
+    return assessed[0] if assessed else (None, None)
+
+
+def _can_justify_rise(note):
+    value = note.get("can_justify_rise")
+    return bool(pd.notna(value) and value)

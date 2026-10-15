@@ -1,18 +1,18 @@
-route,week_of,flagged,matched_note_id
-Ahmedabad-Mumbai,2025-01-20,No (justified),N002
-Chennai-Bangalore,2025-02-24,No (justified),N001
-Chennai-Bangalore,2025-03-03,No (justified),N001
-Chennai-Bangalore,2025-03-10,Yes,
-Chennai-Bangalore,2025-03-17,Yes,
-Delhi-Jaipur,2024-11-11,Yes,
-Delhi-Jaipur,2024-11-18,Yes,
-Mumbai-Pune,2025-06-23,Yes,
-Mumbai-Pune,2025-09-15,Yes,
-Mumbai-Pune,2025-10-06,Yes,
-Mumbai-Pune,2025-10-20,Yes,
-Mumbai-Pune,2025-10-27,Yes,
-Mumbai-Pune,2025-11-03,Yes,
-Mumbai-Pune,2025-11-17,Yes,
-Mumbai-Pune,2025-12-01,Yes,
-Mumbai-Pune,2025-12-08,Yes,
-Mumbai-Pune,2025-12-22,Yes,
+route,week_of,flagged,matched_note_id,expected_reason
+Ahmedabad-Mumbai,2025-01-20,No (justified),N002,
+Chennai-Bangalore,2025-02-24,No (justified),N001,
+Chennai-Bangalore,2025-03-03,No (justified),N001,
+Chennai-Bangalore,2025-03-10,Yes,,
+Chennai-Bangalore,2025-03-17,Yes,,
+Delhi-Jaipur,2024-11-11,Yes,,
+Delhi-Jaipur,2024-11-18,Yes,,
+Mumbai-Pune,2025-06-23,Yes,,
+Mumbai-Pune,2025-09-15,Yes,,
+Mumbai-Pune,2025-10-06,Yes,,
+Mumbai-Pune,2025-10-20,Yes,,
+Mumbai-Pune,2025-10-27,Yes,,"Unexplained. Note N003 (2025-05-05; window 2025-05-05 to 2025-12-31) says nationwide diesel prices rose, increasing transportation costs by roughly 5.0-7.0%. That general pressure would affect similar routes too; it does not explain why this route is 28.3% above its peers. Flagged for review."
+Mumbai-Pune,2025-11-03,Yes,,
+Mumbai-Pune,2025-11-17,Yes,,
+Mumbai-Pune,2025-12-01,Yes,,
+Mumbai-Pune,2025-12-08,Yes,,
+Mumbai-Pune,2025-12-22,Yes,,

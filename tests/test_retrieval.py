@@ -5,11 +5,11 @@ from sentence_transformers import SentenceTransformer
 
 from src.retrieval import (
     MODEL_NAME,
-    find_supporting_note,
     prepare_notes,
     get_eligible_notes,
     rank_eligible_notes,
 )
+from src.verdict import assess_note_support
 from src.explain import choose_note_and_verdict
 
 
@@ -79,15 +79,19 @@ def test_unreviewed_note_is_not_returned_as_supporting(notes, model):
     }
     notes_with_unreviewed = prepare_notes(raw_notes)
 
-    result = find_supporting_note(
+    unreviewed = notes_with_unreviewed.loc[
+        notes_with_unreviewed["note_id"].eq("N011")
+    ].iloc[0]
+    result = assess_note_support(
+        note=unreviewed,
         route="Mumbai-Pune",
         week_of="2026-06-01",
-        notes=notes_with_unreviewed,
-        query="Transportation costs increased",
-        model=model,
+        observed_increase_pct=20.0,
+        peer_increase_pct=20.0,
     )
 
-    assert result is None
+    assert result["explained"] is False
+    assert result["matched_note_id"] is None
 
 
 @pytest.mark.parametrize(
